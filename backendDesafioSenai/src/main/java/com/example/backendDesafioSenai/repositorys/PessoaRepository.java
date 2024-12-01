@@ -10,5 +10,6 @@ import java.util.Optional;
 public interface PessoaRepository extends JpaRepository<Pessoa, Integer> {
 
     Optional<Pessoa> findFirstByCpf(String cpf);
+    Optional<Pessoa> findByIdPessoa(Integer idPessoa);
     boolean existsByCpf(String cpf);
 }

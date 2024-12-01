@@ -16,12 +16,12 @@ import java.util.Set;
 @RestController
 @RequestMapping("pessoa")
 public class PessoaController {
+    private final PessoaService pessoaService;
 
     @Autowired
-    PessoaRepository pessoaRepository;
-
-    @Autowired
-    private PessoaService pessoaService;
+    PessoaController(PessoaService pessoaService) {
+        this.pessoaService = pessoaService;
+    }
 
     @GetMapping
     public ResponseEntity<Set<ResponseListaPessoaDTO>> getAll() {
@@ -35,10 +35,23 @@ public class PessoaController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{idPessoa}")
+    public ResponseEntity<ResponsePessoaDTO> getByIdPessoa(@PathVariable("idPessoa") Integer idPessoa)  {
+        ResponsePessoaDTO response = pessoaService.buscarPessoaPorId(idPessoa);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping
     public ResponseEntity<ResponsePessoaDTO> saveOrUpdate(@Valid @RequestBody RequestPessoaDTO requestPessoaDTO) {
         ResponsePessoaDTO response = pessoaService.cadastrarAtualizarPessoa(requestPessoaDTO);
 
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{idPessoa}")
+    public ResponseEntity<Object> deleteById(@PathVariable("idPessoa") Integer idPessoa) {
+        pessoaService.excluirPessoaPorId(idPessoa);
+
+        return ResponseEntity.noContent().build();
     }
 }

@@ -7,7 +7,6 @@ import com.example.backendDesafioSenai.dtos.ResponseContaPessoaDTO;
 import com.example.backendDesafioSenai.exception.CadastroContaException;
 import com.example.backendDesafioSenai.exception.ErrorResponse;
 import com.example.backendDesafioSenai.models.Pessoa;
-import com.example.backendDesafioSenai.parser.PessoaParser;
 import com.example.backendDesafioSenai.repositorys.PessoaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,16 +22,14 @@ public class ContaService {
 
     private final ApiIntegracaoService apiIntegracaoService;
     private final PessoaRepository pessoaRepository;
-    private final PessoaParser pessoaParser;
 
     @Autowired
     ContaService(
             ApiIntegracaoService apiIntegracaoService,
-            PessoaRepository pessoaRepository,
-            PessoaParser pessoaParser) {
+            PessoaRepository pessoaRepository
+           ) {
         this.apiIntegracaoService = apiIntegracaoService;
         this.pessoaRepository = pessoaRepository;
-        this.pessoaParser = pessoaParser;
     }
 
     public Mono<Set<ResponseContaPessoaDTO>> bucarContasCadastradasApi() {

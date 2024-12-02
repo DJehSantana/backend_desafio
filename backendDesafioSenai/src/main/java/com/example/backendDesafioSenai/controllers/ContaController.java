@@ -5,7 +5,6 @@ import com.example.backendDesafioSenai.dtos.RequestContaDTO;
 import com.example.backendDesafioSenai.dtos.ResponseContaPessoaDTO;
 import com.example.backendDesafioSenai.exception.CadastroContaException;
 import com.example.backendDesafioSenai.services.ContaService;
-import com.example.backendDesafioSenai.services.MovimentacaoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,12 +18,10 @@ import java.util.Set;
 @RequestMapping("conta")
 public class ContaController {
 
-    private final MovimentacaoService movimentacaoService;
     private final ContaService contaService;
 
     @Autowired
-    ContaController(MovimentacaoService movimentacaoService, ContaService contaService) {
-        this.movimentacaoService = movimentacaoService;
+    ContaController(ContaService contaService) {
         this.contaService = contaService;
     }
 
@@ -44,4 +41,6 @@ public class ContaController {
                 .onErrorResume(ex ->
                         Mono.just(ResponseEntity.internalServerError().build()));
     }
+
+
 }

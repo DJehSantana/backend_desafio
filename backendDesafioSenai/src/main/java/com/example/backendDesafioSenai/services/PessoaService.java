@@ -1,13 +1,11 @@
 package com.example.backendDesafioSenai.services;
 
 import com.example.backendDesafioSenai.dtos.*;
-import com.example.backendDesafioSenai.exception.CampoObrigatorioException;
 import com.example.backendDesafioSenai.exception.RegistroDuplicadoException;
 import com.example.backendDesafioSenai.models.Endereco;
 import com.example.backendDesafioSenai.models.Pessoa;
 import com.example.backendDesafioSenai.parser.EnderecoParser;
 import com.example.backendDesafioSenai.parser.PessoaParser;
-import com.example.backendDesafioSenai.repositorys.EnderecoRepository;
 import com.example.backendDesafioSenai.repositorys.PessoaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,24 +15,24 @@ import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 public class PessoaService {
 
-    @Autowired
-    PessoaRepository pessoaRepository;
+    private final PessoaRepository pessoaRepository;
+
+    private final PessoaParser pessoaParser;
+
+    private final EnderecoParser enderecoParser;
 
     @Autowired
-    PessoaParser pessoaParser;
+    PessoaService(PessoaRepository pessoaRepository, PessoaParser pessoaParser, EnderecoParser enderecoParser) {
+        this.pessoaRepository = pessoaRepository;
+        this.pessoaParser = pessoaParser;
+        this.enderecoParser = enderecoParser;
 
-    @Autowired
-    EnderecoService enderecoService;
-    @Autowired
-    private EnderecoRepository enderecoRepository;
-    @Autowired
-    private EnderecoParser enderecoParser;
+    }
 
     public Set<ResponsePessoaDTO> listarTodasPessoas() {
         return pessoaRepository.findAll().stream()

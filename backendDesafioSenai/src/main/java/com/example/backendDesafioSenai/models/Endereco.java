@@ -23,7 +23,8 @@ public class Endereco {
 
     // Relacionamento com Pessoa
     @MapsId
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_PESSOA")
     private Pessoa pessoa;
+
 }

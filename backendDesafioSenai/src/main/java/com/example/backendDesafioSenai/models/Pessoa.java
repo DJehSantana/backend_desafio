@@ -20,6 +20,17 @@ public class Pessoa {
         private String cpf;
 
         //Relacionamento bidirecional com Endereco
-        @OneToOne(mappedBy = "pessoa", cascade = CascadeType.ALL)
+        @OneToOne(mappedBy = "pessoa", cascade = CascadeType.ALL, orphanRemoval = true)
         private Endereco endereco;
+
+        public void setEndereco(Endereco endereco) {
+                if (endereco == null) {
+                        if (this.endereco != null) {
+                                this.endereco.setPessoa(null);
+                        }
+                } else {
+                        endereco.setPessoa(this);
+                }
+                this.endereco = endereco;
+        }
 }

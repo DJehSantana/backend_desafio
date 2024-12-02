@@ -9,6 +9,7 @@ import com.example.backendDesafioSenai.parser.EnderecoParser;
 import com.example.backendDesafioSenai.parser.PessoaParser;
 import com.example.backendDesafioSenai.repositorys.EnderecoRepository;
 import com.example.backendDesafioSenai.repositorys.PessoaRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,12 +36,15 @@ public class PessoaService {
     @Autowired
     private EnderecoParser enderecoParser;
 
-    public Set<ResponseListaPessoaDTO> listarTodasPessoas() {
+    public Set<ResponsePessoaDTO> listarTodasPessoas() {
         return pessoaRepository.findAll().stream()
-                .filter(pessoa -> !Objects.isNull(pessoa.getEndereco()))
+                .filter(Objects::nonNull)
                 .map(pessoa -> {
-                    String cidade = pessoa.getEndereco().getCidade() + " / " + pessoa.getEndereco().getEstado();
-                    return new ResponseListaPessoaDTO(pessoa, cidade);
+                    if(Objects.nonNull(pessoa.getEndereco())) {
+                        EnderecoDTO enderecoDTO = new EnderecoDTO(pessoa.getEndereco());
+                        return new ResponsePessoaDTO(pessoa, enderecoDTO);
+                    }
+                    return new ResponsePessoaDTO(pessoa, null);
                 }).collect(Collectors.toSet());
     }
 
@@ -69,30 +73,40 @@ public class PessoaService {
         validarDadosPessoa(reqPessoaDTO);
         validarDadosEndereco(reqPessoaDTO.endereco());
 
-        Pessoa pessoa = pessoaParser.requestPessoaDTOToEntity(reqPessoaDTO);
-        Pessoa pessoaAtualizada = pessoaRepository.save(pessoa);
+        Pessoa pessoa;
 
-        EnderecoDTO enderecoDTO = reqPessoaDTO.endereco();
-        if(!Objects.isNull(enderecoDTO)) {
-            CadastroEnderecoDTO cadastroEnderecoDTO = CadastroEnderecoDTO.builder()
-                    .idPessoa(Objects.isNull(pessoa.getIdPessoa()) ? null : pessoa.getIdPessoa())
-                    .cep(enderecoDTO.cep())
-                    .rua(enderecoDTO.rua())
-                    .numero(enderecoDTO.numero())
-                    .cidade(enderecoDTO.cidade())
-                    .estado(enderecoDTO.estado())
-                    .build();
-            Endereco endereco = enderecoParser.cadastroEnderecoDTOToEntity(cadastroEnderecoDTO);
+        if (reqPessoaDTO.idPessoa() != null) {
+            pessoa = pessoaRepository.findById(reqPessoaDTO.idPessoa())
+                    .orElseThrow(() -> new EntityNotFoundException("Pessoa não encontrada"));
 
-            endereco.setPessoa(pessoaAtualizada);
-            pessoaAtualizada.setEndereco(endereco);
+            pessoa.setNome(reqPessoaDTO.nome());
+            pessoa.setCpf(reqPessoaDTO.cpf());
+            pessoa.setNascimento(reqPessoaDTO.dataNascimento());
+
+            if (reqPessoaDTO.endereco() != null) {
+                if (pessoa.getEndereco() != null) {
+                    Endereco enderecoAtualizado = enderecoParser.enderecoDTOToEntity(reqPessoaDTO.endereco());
+                    pessoa.setEndereco(enderecoAtualizado);
+                } else {
+                    // Se não existe endereço, cria um novo
+                    Endereco novoEndereco = enderecoParser.enderecoDTOToEntity(reqPessoaDTO.endereco());
+                    novoEndereco.setPessoa(pessoa);
+                    pessoa.setEndereco(novoEndereco);
+                }
+            }
+        } else {
+            // Novo cadastro
+            pessoa = pessoaParser.requestPessoaDTOToEntity(reqPessoaDTO);
+            if (reqPessoaDTO.endereco() != null) {
+                Endereco endereco = enderecoParser.enderecoDTOToEntity(reqPessoaDTO.endereco());
+                endereco.setPessoa(pessoa);
+                pessoa.setEndereco(endereco);
+            }
         }
 
-        if(Objects.isNull(pessoaAtualizada.getEndereco())) {
-            Endereco endereco = enderecoRepository.findById(pessoaAtualizada.getIdPessoa()).orElse(null);
-            pessoaAtualizada.setEndereco(Objects.isNull(endereco) ? new Endereco() : endereco);
-        }
-        return new ResponsePessoaDTO(pessoaAtualizada, new EnderecoDTO(pessoaAtualizada.getEndereco()));
+        Pessoa pessoaSalva = pessoaRepository.save(pessoa);
+        return new ResponsePessoaDTO(pessoaSalva,
+                new EnderecoDTO(pessoaSalva.getEndereco() != null ? pessoaSalva.getEndereco() : new Endereco()));
 
     }
 
@@ -134,7 +148,9 @@ public class PessoaService {
         }
 
         for (String n : nomes) {
-            if (!Pattern.matches("^[A-Z][a-z]*$", n)) {
+            if (n.length() == 0 ||
+                    !Character.isUpperCase(n.charAt(0)) ||
+                    !n.substring(1).chars().allMatch(Character::isLowerCase)) {
                 throw new IllegalArgumentException("A primeira letra de cada nome deve ser maiúscula, e as demais minúsculas");
             }
         }
